@@ -1,129 +1,64 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(ToDoApp());
-}
+void main() => runApp(MaterialApp(home: ToDoApp(), theme: ThemeData.dark()));
 
-class ToDoApp extends StatelessWidget {
+class ToDoApp extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'To-Do List',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: ToDoHomePage(),
-    );
-  }
+  _ToDoAppState createState() => _ToDoAppState();
 }
 
-class ToDoHomePage extends StatefulWidget {
-  @override
-  _ToDoHomePageState createState() => _ToDoHomePageState();
-}
-
-class _ToDoHomePageState extends State<ToDoHomePage> {
-  final TextEditingController _textController = TextEditingController();
-  final List<Task> _tasks = [];
+class _ToDoAppState extends State<ToDoApp> {
+  final _controller = TextEditingController();
+  final _tasks = <Map<String, dynamic>>[];
 
   void _addTask() {
-    String text = _textController.text.trim();
+    final text = _controller.text.trim();
     if (text.isNotEmpty) {
       setState(() {
-        _tasks.add(Task(name: text));
-        _textController.clear();
+        _tasks.add({'name': text, 'done': false});
+        _controller.clear();
       });
     }
   }
 
-  void _toggleTask(int index) {
+  void _toggleTask(int i) {
     setState(() {
-      _tasks[index].isDone = !_tasks[index].isDone;
-    });
-  }
-
-  void _deleteTask(int index) {
-    setState(() {
-      _tasks.removeAt(index);
+      _tasks[i]['done'] = !_tasks[i]['done'];
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Yapılacaklar Listesi'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Görev Ekleme Alanı
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    decoration: InputDecoration(
-                      labelText: 'Yeni görev',
-                      border: OutlineInputBorder(),
-                    ),
+      appBar: AppBar(title: Text('To-Do')),
+      body: Column(
+        children: [
+          TextField(
+            controller: _controller,
+            onSubmitted: (_) => _addTask(),
+            decoration: InputDecoration(hintText: 'Yeni görev'),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _tasks.length,
+              itemBuilder: (context, i) => ListTile(
+                leading: Checkbox(
+                  value: _tasks[i]['done'],
+                  onChanged: (_) => _toggleTask(i),
+                ),
+                title: Text(
+                  _tasks[i]['name'],
+                  style: TextStyle(
+                    decoration: _tasks[i]['done']
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
-                SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _addTask,
-                  child: Text('Ekle'),
-                ),
-              ],
+              ),
             ),
-            SizedBox(height: 16),
-            // Görev Listesi
-            Expanded(
-              child: _tasks.isEmpty
-                  ? Center(child: Text("Henüz görev yok."))
-                  : ListView.builder(
-                      itemCount: _tasks.length,
-                      itemBuilder: (context, index) {
-                        final task = _tasks[index];
-                        return Dismissible(
-                          key: Key(task.name + index.toString()),
-                          onDismissed: (_) => _deleteTask(index),
-                          background: Container(
-                            color: Colors.red,
-                            alignment: Alignment.centerRight,
-                            padding: EdgeInsets.only(right: 20),
-                            child: Icon(Icons.delete, color: Colors.white),
-                          ),
-                          child: ListTile(
-                            leading: Checkbox(
-                              value: task.isDone,
-                              onChanged: (_) => _toggleTask(index),
-                            ),
-                            title: Text(
-                              task.name,
-                              style: TextStyle(
-                                decoration: task.isDone
-                                    ? TextDecoration.lineThrough
-                                    : TextDecoration.none,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
-}
-
-class Task {
-  String name;
-  bool isDone;
-
-  Task({required this.name, this.isDone = false});
 }
